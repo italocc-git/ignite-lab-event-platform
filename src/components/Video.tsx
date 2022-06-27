@@ -2,50 +2,24 @@ import { DefaultUi, Player, Youtube } from "@vime/react";
 import { CaretRight, DiscordLogo, FileArrowDown, Lightning } from "phosphor-react";
 
 import '@vime/core/themes/default.css';
-import { gql, useQuery } from "@apollo/client";
+import { useGetLessonBySlugQuery } from "../graphql/generated";
 
 interface VideoProps {
     lessonSlug : string
 }
-interface GetLessonBySlugResponse {
-    lesson : {
-        title: string;
-        id: string;
-        description : string;
-        videoID : string;
-        teacher : {
-            name : string;
-            bio : string;
-            avatarURL : string;
-        }
-    }
-}
+
 
 export function Video({lessonSlug} : VideoProps) {
-    const GET_LESSON_BY_SLUG_QUERY = gql`
-    query GetLessonBySlug ($slug: String) {
-        lesson(where: {slug: $slug}) {
-            title
-            id
-            description
-            videoId
-            teacher {
-            name
-            bio
-            avatarURL
-            }
-        }
-        }
-`
 
-    const { data } = useQuery<GetLessonBySlugResponse>(GET_LESSON_BY_SLUG_QUERY,
-        {
-            variables: {
-                slug: lessonSlug
-            } 
-        })
 
-        if(!data){
+    const { data } = useGetLessonBySlugQuery({
+        variables: {
+            slug : lessonSlug
+        }
+    }
+        )
+
+        if(!data || !data.lesson){
             return (
                 <div className="flex-1">
                     Carregando ...
@@ -60,7 +34,7 @@ export function Video({lessonSlug} : VideoProps) {
             <div className="bg-black flex justify-center">
                 <div className="h-full w-full max-w-[1100px] max-h-[60vh] aspect-video">
                     <Player>
-                        <Youtube videoId={data.lesson.videoID}/>
+                        <Youtube videoId={data.lesson.videoId}/>
                         <DefaultUi />
                     </Player>
 
@@ -75,6 +49,7 @@ export function Video({lessonSlug} : VideoProps) {
                             <p className="mt-4 text-gray-200 leading-relaxed">
                                 {data.lesson.description}
                             </p>
+                            {data.lesson.teacher && (
                             <div className="flex items-center gap-4 mt-6">
                                 <img 
                                     src={data.lesson.teacher.avatarURL} 
@@ -86,6 +61,7 @@ export function Video({lessonSlug} : VideoProps) {
                                     <span className="text-gray-200 text-sm block">{data.lesson.teacher.bio}</span>
                                 </div>
                             </div>
+                            )}
                         </div>
                         <div className="flex flex-col gap-4">
                             <a href="" className="p-4 text-sm bg-green-500 flex items-center rounded font-bold uppercase gap-2 justify-center hover:bg-green-700 transition-colors">
